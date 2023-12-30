@@ -1,0 +1,14 @@
+{
+    "experiment_1": {
+        "num_clients": 10,
+        "num_overlap": 0.3
+    },
+    "experiment_2": {
+        "num_clients": 10,
+        "num_overlap": 0.3
+    },
+    "experiment_3": {
+        "num_clients": 20,
+        "num_overlap": 0.9
+    }    
+}
