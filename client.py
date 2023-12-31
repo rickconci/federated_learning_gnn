@@ -6,6 +6,8 @@ import lightning as L
 import torch
 
 from datasets.dataset import PlanetoidDataset, PlanetoidDatasetType
+from datasets import NodeFeatureSliceDataset, EdgeFeatureSliceDataset, GraphPartitionSliceDataset
+
 from models.graph_attention_network import GAT
 from models.graph_convolutional_neural_network import GCN
 
@@ -16,9 +18,10 @@ from models.graph_convolutional_neural_network import GCN
 
 
 class FlowerClient(fl.client.NumPyClient):
-    def __init__(self, model: GCN, dataset: PlanetoidDataset):
+    def __init__(self, model: GCN, dataset: PlanetoidDataset, epochs: int):
         self.model = model
         self.dataset = dataset
+        self.epochs = epochs
 
     def get_parameters(self, config):
         return _get_parameters(self.model)
@@ -30,7 +33,7 @@ class FlowerClient(fl.client.NumPyClient):
         self.set_parameters(parameters)
 
         trainer = L.Trainer(
-            max_epochs=100,
+            max_epochs=self.epochs,
             enable_checkpointing=False,
             enable_progress_bar=False,
             logger=None,
@@ -74,29 +77,115 @@ def _set_parameters(model, parameters):
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Flower")
+    parser = argparse.ArgumentParser(description="Flower Client configuration")
+
     parser.add_argument(
-        "--node-id",
+        "--num_clients",
         type=int,
-        choices=range(0, 10),
         required=True,
-        help="Specifies the artificial data partition",
-    )
-    # args = parser.parse_args()
-    # node_id = args.node_id
-
-    # Model and data
-    dataset = PlanetoidDataset(PlanetoidDatasetType.CORA)
-    model = GAT(
-        dataset.dataset.num_features,
-        num_hidden=16,
-        num_classes=dataset.dataset.num_classes,
+        help="Total number of clients being created",
     )
 
-    # partitioned_data = NodeFeatureSliceDataset(dataset)
+    ## FEDERATION ARGUMENTS
+    parser.add_argument(
+        "--client_id",
+        type=int,
+        required=True,
+        help="Identifies specific client being created",
+    )
 
-    # Flower client]
-    client = FlowerClient(model, dataset)
+    ## DATASET ARGUMENTS
+    parser.add_argument(
+        "--dataset_choice",
+        type=str,
+        required=True,
+        choices=['Cora', 'Citeseer', 'Pubmed'],
+        help="Choice of dataset"
+    )
+    
+    parser.add_argument(
+        "--slice_method",
+        type=str,
+        required=True,
+        choices=['None', 'node_feature', 'edge_feature', 'graph_partition'],
+        help="Method used for slicing the data"
+    )
+
+    parser.add_argument(
+        "--num_overlap", 
+        type=float, 
+        required= False,  #CHANGE TO TRUE
+        choices = range(0,100),
+        default = 0,
+        help="Percentage data overlap across clients"
+    )
+
+    ## MODEL ARGUMENTS
+    parser.add_argument(
+         "--GNN_model", 
+        type=str, 
+        required=True, 
+        default = 'GAT',
+        choices = ['GAT', 'GCN'],
+        help="type of model"
+    )
+
+    parser.add_argument(
+         "--GNN_hidden", 
+        type=int, 
+        required=False,  #Change to true?
+        default = 16, 
+        help="number of hidden layers in model"
+    )
+
+    ## FEDERATED TRAINING ARGUMENTS
+    parser.add_argument(
+         "--Epochs_per_client", 
+        type=int, 
+        required=True,  #Change to true?
+        default = 100, 
+        help="Number of training epochs per client"
+    )
+
+    args = parser.parse_args()
+
+    # DATASET CHOICE
+    if args.dataset_choice=="Cora":
+        dataset = PlanetoidDataset(PlanetoidDatasetType.CORA)
+    elif args.dataset_choice=="Pubmed":
+        dataset = PlanetoidDataset(PlanetoidDatasetType.PUBMED)
+    elif args.dataset_choice=="Citeseer":
+        dataset = PlanetoidDataset(PlanetoidDatasetType.CITESEER)
+
+    # SLICING METHOD + OVERLAP
+    if args.slice_method =="node_feature":
+        node_slicer = NodeFeatureSliceDataset(dataset) #input dataset to node feat slicer
+        sliced_data = node_slicer.slice_dataset() #input overlap choice in node feat slicer + total num_nodes + node_ID
+    elif args.slice_method =="edge_feature":
+        edge_slicer = EdgeFeatureSliceDataset(dataset)
+        sliced_data = edge_slicer.slice_dataset()
+    elif args.slice_method=="graph_partition":
+        graph_slicer = GraphPartitionSliceDataset(dataset)
+        sliced_data = graph_slicer.slice_dataset()  #LOTS more inputs here
+    else:
+        sliced_data = dataset
+    ## Make sure sliced_data is in same format as dataset.dataset to be inputted to model in same format?
+        
+    if args.GNN_model =="GAT":
+        model = GAT(
+            sliced_data.dataset.num_features,
+            num_hidden=args.GNN_hidden,
+            num_classes=dataset.dataset.num_classes,
+        )
+    elif args.GNN_model =="GCN":
+        model = GCN(
+            sliced_data.dataset.num_features,
+            #num_hidden=args.GNN_hidden,
+            num_classes=dataset.dataset.num_classes,
+        )
+
+    # Flower client
+    client = FlowerClient(model, sliced_data, args.Epochs_per_client)
     fl.client.start_numpy_client(server_address="127.0.0.1:8080", client=client)
 
 
