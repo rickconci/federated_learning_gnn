@@ -45,7 +45,6 @@ for experiment in $(jq -r 'keys[]' "$JSON_FILE"); do
             --GNN_model "${GNN_model}" \
             --GNN_hidden "${GNN_hidden}" \
             --Epochs_per_client "${Epochs_per_client}" \
-            --Fed_Rounds "${Fed_Rounds}" \
              &
     done
 done

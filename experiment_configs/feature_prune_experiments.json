@@ -1,12 +1,12 @@
 {
     "experiment_1": {
-        "num_clients": 10,
+        "num_clients": 2,
         "dataset_choice": "Cora",
         "slice_method": "None",
         "num_overlap": 0,
         "GNN_model": "GAT",
         "GNN_hidden": 16,
         "Epochs_per_client": 100,
-        "Fed_Rounds": 5
+        "Fed_Rounds": 10
     }
 }

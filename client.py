@@ -6,7 +6,7 @@ import lightning as L
 import torch
 
 from datasets.dataset import PlanetoidDataset, PlanetoidDatasetType
-from datasets import NodeFeatureSliceDataset, EdgeFeatureSliceDataset, GraphPartitionSliceDataset
+from datasets.dataset import NodeFeatureSliceDataset, EdgeFeatureSliceDataset, GraphPartitionSliceDataset
 
 from models.graph_attention_network import GAT
 from models.graph_convolutional_neural_network import GCN
