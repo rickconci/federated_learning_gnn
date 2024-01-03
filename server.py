@@ -1,19 +1,7 @@
 import flwr as fl
-import argparse
 
 
-def main() -> None:
-
-    parser = argparse.ArgumentParser(description="Flower Server configuration")
-    parser.add_argument(
-        '--Fed_Rounds', 
-        type=int, 
-        required=True, 
-        help='Number of Federated Rounds')
-    args = parser.parse_args()
-
-
-
+def run_server(num_federated_rounds: int) -> None:
     # Define strategy
     strategy = fl.server.strategy.FedAvg(
         fraction_fit=0.5,
@@ -25,12 +13,7 @@ def main() -> None:
 
     # Start Flower server for three rounds of federated learning
     fl.server.start_server(
-        server_address="0.0.0.0:8080",
-        config=fl.server.ServerConfig(num_rounds=args.Fed_Rounds),
+        server_address="localhost:8080",
+        config=fl.server.ServerConfig(num_rounds=num_federated_rounds),
         strategy=strategy,
     )
-
-
-
-if __name__ == "__main__":
-    main()

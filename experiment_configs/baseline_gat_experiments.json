@@ -1,0 +1,32 @@
+{
+    "experiment_1": {
+        "num_clients": 1,
+        "dataset_name": "Cora",
+        "slice_method": null,
+        "percentage_overlap": 0,
+        "model_type": "GAT",
+        "num_hidden_params": 16,
+        "epochs_per_client": 100,
+        "num_rounds": 10
+    },
+    "experiment_2": {
+        "num_clients": 1,
+        "dataset_name": "CiteSeer",
+        "slice_method": null,
+        "percentage_overlap": 0,
+        "model_type": "GAT",
+        "num_hidden_params": 16,
+        "epochs_per_client": 100,
+        "num_rounds": 10
+    },
+    "experiment_3": {
+        "num_clients": 1,
+        "dataset_name": "PubMed",
+        "slice_method": null,
+        "percentage_overlap": 0,
+        "model_type": "GAT",
+        "num_hidden_params": 16,
+        "epochs_per_client": 100,
+        "num_rounds": 10
+    }
+}
