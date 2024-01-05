@@ -6,9 +6,9 @@ def run_server(num_federated_rounds: int) -> None:
     strategy = fl.server.strategy.FedAvg(
         fraction_fit=0.5,
         fraction_evaluate=0.5,
-        min_fit_clients=1,
-        min_evaluate_clients=1,
-        min_available_clients=1,
+        min_fit_clients=2,
+        min_evaluate_clients=2,
+        min_available_clients=2,
     )
 
     # Start Flower server for three rounds of federated learning

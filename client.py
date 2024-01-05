@@ -1,17 +1,12 @@
-import logging
 from collections import OrderedDict
 
 import flwr as fl
 import lightning as L
 import torch
 
-from datasets.dataset import Dataset, PlanetoidDataset
+from datasets.dataset import CustomDataset, PlanetoidDataset
 from models.graph_attention_network import GAT
 from models.graph_convolutional_neural_network import GCN
-
-# from datasets.utils.logging import disable_progress_bar
-# disable_progress_bar()
-logger = logging.getLogger(__name__)
 
 
 class FlowerClient(fl.client.NumPyClient):
@@ -33,7 +28,6 @@ class FlowerClient(fl.client.NumPyClient):
             max_epochs=self.epochs,
             enable_checkpointing=False,
             enable_progress_bar=False,
-            logger=None,
             accelerator="cpu",
         )
         trainer.fit(
@@ -57,7 +51,7 @@ class FlowerClient(fl.client.NumPyClient):
         loss = results[0]["test_loss"]
 
         return (
-            loss,
+            float(loss),
             int(self.dataset.dataset[0].test_mask.sum()),
             {"loss": loss},
         )
@@ -73,7 +67,25 @@ def _set_parameters(model, parameters):
     model.load_state_dict(state_dict, strict=True)
 
 
-def run_client(model: GCN | GAT, dataset: Dataset, num_epochs: int) -> None:
-    # Flower client
-    client = FlowerClient(model, dataset, num_epochs)
-    fl.client.start_numpy_client(server_address="localhost:8080", client=client)
+def run_client(
+    model_type: str,
+    num_hidden_params: int,
+    client_datasets: list[CustomDataset],
+    num_epochs: int,
+    cid: int,
+) -> None:
+    custom_dataset = client_datasets[int(cid)]
+
+    if model_type == "GAT":
+        model = GAT(
+            num_features=custom_dataset.dataset[0].num_features,
+            num_hidden=num_hidden_params,
+            num_classes=custom_dataset.dataset[0].num_classes,
+        )
+    elif model_type == "GCN":
+        model = GCN(
+            num_features=custom_dataset.dataset[0].num_features,
+            num_classes=custom_dataset.dataset[0].num_classes,
+        )
+
+    return FlowerClient(model, custom_dataset, num_epochs)

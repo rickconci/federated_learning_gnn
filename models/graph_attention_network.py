@@ -49,6 +49,14 @@ class GAT(L.LightningModule):
         batch = batch.cpu()
         loss = self.criterion(out[batch.train_mask], batch.y[batch.train_mask])
 
+        self.log(
+            f"train_loss",
+            loss,
+            prog_bar=False,
+            sync_dist=True,
+            logger=True,
+        )
+
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -74,4 +82,6 @@ class GAT(L.LightningModule):
         # loss = self.criterion(out[node_mask], batch.y[label_mask])
         acc = (pred[node_mask] == batch.y[label_mask]).float().mean()
 
-        self.log(f"{stage}_loss", acc, prog_bar=False)
+        self.log(
+            f"{stage}_loss", acc, prog_bar=False, sync_dist=True, logger=True
+        )

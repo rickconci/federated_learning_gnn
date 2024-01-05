@@ -1,12 +1,12 @@
 {
     "experiment_1": {
-        "num_clients": 1,
+        "num_clients": 10,
         "dataset_name": "Cora",
-        "slice_method": null,
-        "percentage_overlap": 0,
+        "slice_method": "node_feature",
+        "percentage_overlap": 10,
         "model_type": "GAT",
         "num_hidden_params": 16,
-        "epochs_per_client": 100,
+        "epochs_per_client": 10,
         "num_rounds": 10
     },
     "experiment_2": {
@@ -16,7 +16,7 @@
         "percentage_overlap": 0,
         "model_type": "GAT",
         "num_hidden_params": 16,
-        "epochs_per_client": 100,
+        "epochs_per_client": 10,
         "num_rounds": 10
     },
     "experiment_3": {
@@ -26,7 +26,7 @@
         "percentage_overlap": 0,
         "model_type": "GAT",
         "num_hidden_params": 16,
-        "epochs_per_client": 100,
+        "epochs_per_client": 10,
         "num_rounds": 10
     }
 }

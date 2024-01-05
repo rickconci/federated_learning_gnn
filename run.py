@@ -1,9 +1,10 @@
 import json
-import time
-from threading import Thread
+from functools import partial
 
 import click
+import flwr as fl
 
+import wandb
 from client import run_client
 from datasets.dataset import (
     EdgeFeatureSliceDataset,
@@ -12,13 +13,8 @@ from datasets.dataset import (
     PlanetoidDataset,
     PlanetoidDatasetType,
 )
-from models.graph_attention_network import GAT
-from models.graph_convolutional_neural_network import GCN
-from server import run_server
 
-# from utils import create_logger
-
-# logger = create_logger(None)
+wandb.init(project="federated_learning_gnn", entity="ml-sys")
 
 
 def run_experiment(
@@ -35,50 +31,48 @@ def run_experiment(
     epochs_per_client = experiement_data["epochs_per_client"]
     num_rounds = experiement_data["num_rounds"]
 
-    dataset = PlanetoidDataset(PlanetoidDatasetType(dataset_name))
+    custom_dataset = PlanetoidDataset(
+        PlanetoidDatasetType(dataset_name), num_clients=num_clients
+    )
 
     if slice_method == "node_feature":
-        dataset = NodeFeatureSliceDataset(dataset)
+        custom_dataset = NodeFeatureSliceDataset(
+            PlanetoidDatasetType(dataset_name),
+            num_clients=num_clients,
+            overlap_percent=percentage_overlap,
+        )
     elif slice_method == "edge_feature":
-        dataset = EdgeFeatureSliceDataset(dataset)
+        custom_dataset = EdgeFeatureSliceDataset(custom_dataset)
     elif slice_method == "graph_partition":
-        dataset = GraphPartitionSliceDataset(dataset)
+        custom_dataset = GraphPartitionSliceDataset(custom_dataset)
 
-    if model_type == "GAT":
-        model = GAT(
-            dataset.dataset.num_features,
-            num_hidden=num_hidden_params,
-            num_classes=dataset.dataset.num_classes,
-        )
-    elif model_type == "GCN":
-        model = GCN(
-            dataset.dataset.num_features,
-            num_classes=dataset.dataset.num_classes,
-        )
+    client_fn_partial = partial(
+        run_client,
+        model_type,
+        num_hidden_params,
+        custom_dataset.dataset_per_client,
+        epochs_per_client,
+    )
 
-    threads = []
+    strategy = fl.server.strategy.FedAvg(
+        fraction_fit=0.5,
+        fraction_evaluate=0.5,
+        min_fit_clients=5,
+        min_evaluate_clients=5,
+        min_available_clients=5,
+    )
+    client_resources = {"num_cpus": 1, "num_gpus": 0.0}
 
-    print("Running Server")
-    server_thread = Thread(target=run_server, args=(num_rounds,))
-    server_thread.start()
-    threads.append(server_thread)
-    time.sleep(3)
+    metrics = fl.simulation.start_simulation(
+        client_fn=client_fn_partial,
+        num_clients=num_clients,
+        config=fl.server.ServerConfig(num_rounds=num_rounds),
+        strategy=strategy,
+        client_resources=client_resources,
+    )
 
-    for client_id in range(0, num_clients):
-        print(f"Starting client {client_id} for {experiment_name}")
-        client_thread = Thread(
-            target=run_client,
-            args=(
-                model,
-                dataset,
-                epochs_per_client,
-            ),
-        )
-        client_thread.start()
-        threads.append(client_thread)
-
-    for thread in threads:
-        thread.join()
+    for federated_round, accuracy in metrics.losses_distributed:
+        wandb.log({"test_accuracy": accuracy})
 
 
 @click.command()
@@ -88,7 +82,13 @@ def run_experiment(
     default="Cora",
     type=click.Choice(["Cora", "CiteSeer", "PubMed"]),
 )
-@click.option("--slice_method", default=None)
+@click.option(
+    "--slice_method",
+    default=None,
+    type=click.Choice(
+        [None, "node_feature", "edge_feature", "graph_partition"]
+    ),
+)
 @click.option("--percentage_overlap", default=0)
 @click.option("--model_type", default="GAT", type=click.Choice(["GCN", "GAT"]))
 @click.option("--num_hidden_params", default=16)
@@ -110,7 +110,6 @@ def run(
     experiment_name: str,
     dry_run: bool,
 ):
-    # open json file
     if experiment_config_filename:
         with open(
             f"experiment_configs/{experiment_config_filename}.json"
