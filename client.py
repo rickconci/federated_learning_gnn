@@ -16,7 +16,7 @@ class FlowerClient(fl.client.NumPyClient):
         self.epochs = epochs
 
     def get_parameters(self, config):
-        return _get_parameters(self.model)
+        return get_model_parameters(self.model)
 
     def set_parameters(self, parameters):
         _set_parameters(self.model, parameters)
@@ -57,7 +57,7 @@ class FlowerClient(fl.client.NumPyClient):
         )
 
 
-def _get_parameters(model):
+def get_model_parameters(model):
     return [val.cpu().numpy() for _, val in model.state_dict().items()]
 
 

@@ -7,7 +7,8 @@
         "model_type": "GAT",
         "num_hidden_params": 16,
         "epochs_per_client": 10,
-        "num_rounds": 10
+        "num_rounds": 10,
+        "aggregation_strategy": "FedAdagrad"
     },
     "experiment_2": {
         "num_clients": 1,
@@ -17,7 +18,8 @@
         "model_type": "GAT",
         "num_hidden_params": 16,
         "epochs_per_client": 10,
-        "num_rounds": 10
+        "num_rounds": 10,
+        "aggregation_strategy": "FedAvg"
     },
     "experiment_3": {
         "num_clients": 1,
@@ -27,6 +29,7 @@
         "model_type": "GAT",
         "num_hidden_params": 16,
         "epochs_per_client": 10,
-        "num_rounds": 10
+        "num_rounds": 10,
+        "aggregation_strategy": "FedAvg"
     }
 }
