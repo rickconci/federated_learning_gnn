@@ -1,5 +1,4 @@
 import lightning as L
-import torch
 from torch import nn, optim
 from torch.nn import Linear
 from torch_geometric.nn import GCNConv
@@ -7,25 +6,42 @@ from torch_geometric.nn import GCNConv
 
 class GCN(L.LightningModule):
     def __init__(
-        self, num_features: int, num_classes: int, visualise: bool = False
+        self,
+        num_features: int,
+        num_classes: int,
+        num_hidden: int = 4,
+        num_hidden_layers: int = 1,
+        visualise: bool = False,
+        learning_rate: float = 0.01,
+        proximal_mu: int = 0,
     ):
         super().__init__()
 
         self.visualise = visualise
+        self.learning_rate = learning_rate
 
-        torch.manual_seed(1234)
-        self.conv1 = GCNConv(num_features, 4)
-        self.conv2 = GCNConv(4, 4)
-        self.conv3 = GCNConv(4, 2)
+        self.conv1 = GCNConv(num_features, num_hidden)
+        self.hidden_layers = []
+
+        for _ in range(num_hidden_layers):
+            self.hidden_layers.append(GCNConv(num_hidden, num_hidden))
+
+        self.hidden_layers = nn.ModuleList(self.hidden_layers)
+
+        self.conv3 = GCNConv(num_hidden, 2)
         self.classifier = Linear(2, num_classes)
 
         self.criterion = nn.CrossEntropyLoss()
+        self.proximal_mu = proximal_mu
 
     def forward(self, x, edge_index):
         h = self.conv1(x, edge_index)
         h = h.tanh()
-        h = self.conv2(h, edge_index)
-        h = h.tanh()
+
+        for hidden_layer in self.hidden_layers:
+            h = hidden_layer(h, edge_index)
+            h = h.tanh()
+
         h = self.conv3(h, edge_index)
         h = h.tanh()
 
@@ -33,7 +49,7 @@ class GCN(L.LightningModule):
         return out, h
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=0.001)
+        optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
 
     def training_step(self, batch, batch_idx):
@@ -66,4 +82,4 @@ class GCN(L.LightningModule):
 
         # loss = self.criterion(out[node_mask], batch.y[label_mask])
         acc = (pred[node_mask] == batch.y[label_mask]).float().mean()
-        self.log(f"{stage}_loss", acc, prog_bar=False)
+        self.log(f"{stage}_accuracy", acc, prog_bar=False)

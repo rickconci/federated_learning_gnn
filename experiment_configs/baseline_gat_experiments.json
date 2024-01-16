@@ -1,14 +1,16 @@
 {
     "experiment_1": {
-        "num_clients": 10,
+        "num_clients": 1,
         "dataset_name": "Cora",
         "slice_method": "node_feature",
-        "percentage_overlap": 10,
+        "percentage_overlap": 0,
         "model_type": "GAT",
         "num_hidden_params": 16,
         "epochs_per_client": 10,
         "num_rounds": 10,
-        "aggregation_strategy": "FedAdagrad"
+        "aggregation_strategy": "FedAvg",
+        "num_hidden_layers": 0,
+        "learning_rate": 0.01
     },
     "experiment_2": {
         "num_clients": 1,
@@ -19,7 +21,9 @@
         "num_hidden_params": 16,
         "epochs_per_client": 10,
         "num_rounds": 10,
-        "aggregation_strategy": "FedAvg"
+        "aggregation_strategy": "FedAvg",
+        "num_hidden_layers": 0,
+        "learning_rate": 0.01
     },
     "experiment_3": {
         "num_clients": 1,
@@ -30,6 +34,8 @@
         "num_hidden_params": 16,
         "epochs_per_client": 10,
         "num_rounds": 10,
-        "aggregation_strategy": "FedAvg"
+        "aggregation_strategy": "FedAvg",
+        "num_hidden_layers": 0,
+        "learning_rate": 0.01
     }
 }

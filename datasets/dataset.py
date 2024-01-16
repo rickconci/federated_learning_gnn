@@ -65,7 +65,7 @@ class PlanetoidDataset:
         ], self.dataset.x.shape[1]
 
 
-class NodeFeatureSliceDataset:
+class NodeFeatureSliceDataset2:
     def __init__(
         self,
         name: PlanetoidDatasetType,
@@ -137,7 +137,7 @@ class NodeFeatureSliceDataset:
         ], partition_features.shape[1]
 
 
-class NodeFeatureSliceDataset2:
+class NodeFeatureSliceDataset:
     def __init__(
         self,
         name: PlanetoidDatasetType,
@@ -209,19 +209,3 @@ class NodeFeatureSliceDataset2:
         return [
             CustomDataset(dataset=[data]) for data in dataset_per_client
         ], partition_features.shape[1]
-
-
-class EdgeFeatureSliceDataset:
-    def __init__(self, dataset: PlanetoidDataset) -> None:
-        self.dataset = dataset
-
-    def slice_dataset(num_partitions: int, overlap_amount: int):
-        pass
-
-
-class GraphPartitionSliceDataset:
-    def __init__(self, dataset: PlanetoidDataset) -> None:
-        self.dataset = dataset
-
-    def slice_dataset(nums_partitions: int):
-        pass

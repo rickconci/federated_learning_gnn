@@ -1,0 +1,9 @@
+lightning==2.1.2
+lightning-utilities==0.10.
+torch==2.1.0
+torch_geometric==2.4.0
+torchdata==0.7.0
+flwr==1.6.0
+flwr-datasets==0.0.2
+wandb==0.16.1
+click==8.1.3
